@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Рубль → донг</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap">
+<style>
+/* Одна колонка: калькулятор → курсы источников → сравнение.
+   Шаблоны: ДШ-015 КАЛЬКУЛЯТОР-СЕТКА (карточка), ДШ-027 ТАБЛИЦА-РЫНОК (Manrope, таблица, бейджи).
+   Пара цветов: синий рубль + красный донг (128° на круге RYB), жёлтый только на бейдже. */
+:root{
+  --bg:#EEF2F6; --card:#FFFFFF; --ink:#14213D; --muted:#5B6B82; --line:#DDE3EC;
+  --rub:#1F4FD8; --vnd:#DA2C2C; --gold:#F2B705; --gold-ink:#4A3800;
+  --font:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0E1420; --card:#161E2D; --ink:#E8EDF5; --muted:#93A0B5; --line:#263247;
+  --rub:#7C9BFF; --vnd:#FF7A7A; --gold:#F2C230; --gold-ink:#2B2000; color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--font);font-variant-numeric:tabular-nums;
+  padding-block:24px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:720px;margin:0 auto;display:grid;gap:16px}
+header{display:flex;justify-content:space-between;align-items:baseline;gap:4px 12px;flex-wrap:wrap}
+h1{margin:0;font-size:26px;font-weight:800;letter-spacing:-.01em}
+.r{color:var(--rub)} .d{color:var(--vnd)}
+.muted{color:var(--muted);font-size:13px}
+.card{background:var(--card);border-radius:12px;box-shadow:0 10px 25px rgba(20,33,61,.08);padding:20px;display:grid;gap:16px;min-width:0}
+h2{margin:0;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+label{display:grid;gap:4px;font-size:13px;color:var(--muted)}
+input{font:800 20px var(--font);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;
+  padding:10px 12px;width:100%;font-variant-numeric:tabular-nums}
+input:focus{outline:2px solid var(--rub);outline-offset:1px}
+input::placeholder{color:var(--muted);font-weight:600}
+#rub{color:var(--rub)} #vnd{color:var(--vnd)}
+.summary{border-top:1px solid var(--line);padding-top:14px;display:grid;gap:4px}
+.summary b{color:var(--ink)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.tile{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:grid;gap:2px;align-content:start}
+.tile span{font-size:12px;color:var(--muted)}
+.tile b{font-size:19px;font-weight:800}
+.tile input{font-size:19px;padding:2px 6px}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px 8px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left;white-space:normal;padding-left:0}
+th:last-child,td:last-child{padding-right:0}
+th{font-size:12px;font-weight:600;color:var(--muted)}
+td small{display:block;color:var(--muted);font-size:12px;font-weight:400}
+tr:last-child td{border-bottom:0}
+tr.ref td{color:var(--muted)}
+tr.mine td:first-child{font-weight:800}
+.chip{display:inline-block;font-size:11px;font-weight:800;padding:1px 8px;border-radius:999px;background:var(--gold);color:var(--gold-ink);margin-left:6px;vertical-align:1px}
+footer{color:var(--muted);font-size:12px;max-width:65ch;display:grid;gap:6px}
+footer p{margin:0}
+a{color:var(--rub)}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1><span class="r">Рубль</span> → <span class="d">донг</span></h1>
+    <span class="muted" id="upd">Загружаю курсы…</span>
+  </header>
+
+  <section class="card" aria-labelledby="h-calc">
+    <h2 id="h-calc">Покупка через Bybit</h2>
+    <div class="grid">
+      <label for="bybit">Мой курс P2P, ₽ за 1 USDT<input id="bybit" inputmode="decimal" autocomplete="off" value="83,50"></label>
+      <label for="usdt">Bybit, ₫ за 1 USDT<input id="usdt" inputmode="decimal" autocomplete="off" placeholder="рынок"></label>
+    </div>
+    <div class="grid">
+      <label for="rub">Отдаю, ₽<input id="rub" inputmode="decimal" autocomplete="off" value="3000"></label>
+      <label for="vnd">Получаю, ₫<input id="vnd" inputmode="decimal" autocomplete="off"></label>
+    </div>
+    <div class="summary muted" id="summary" aria-live="polite"></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-now">
+    <h2 id="h-now">Курсы сейчас</h2>
+    <div class="tiles" id="tiles"></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-cmp">
+    <h2 id="h-cmp">Сколько донгов за 1 рубль</h2>
+    <div class="scroll"><table>
+      <thead><tr><th>Где</th><th>1 ₽ =</th><th>100 000 ₫ =</th><th>Переплата к ЦБ</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table></div>
+  </section>
+
+  <footer>
+    <p>Расчёт: ₽ ÷ курс P2P = USDT, затем USDT × курс Bybit в донгах = ₫. Комиссия P2P у тейкера 0.</p>
+    <p>Курс Bybit в донгах: пустое поле берёт рыночную цену USDT (CoinGecko). Точный курс Bybit виден в «Активах»: сумма в ₫ ÷ сумма в USDT.</p>
+    <p>Курсы обновляются каждый час: ЦБ России, Т-Банк, Vietcombank, CoinGecko. Сайт Госбанка Вьетнама закрыт от автоматических запросов, поэтому вьетнамский курс берётся у Vietcombank: это госбанк, контрольный пакет у Госбанка. Сбер тоже не отдаёт курс программам, его курс вписывается вручную с <a href="https://www.sberbank.ru/ru/quotes/currencies" target="_blank" rel="noopener">sberbank.ru</a>.</p>
+  </footer>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const num = s => { const n = parseFloat(String(s).replace(/[\s  ]/g, '').replace(',', '.')); return n > 0 ? n : NaN; };
+const fmt = (n, d = 0) => Number.isFinite(n)
+  ? n.toLocaleString('ru-RU', {minimumFractionDigits: d, maximumFractionDigits: d}).replace('-', '−') : '—';
+const when = iso => iso ? new Date(iso).toLocaleString('ru-RU', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'}) : '';
+const store = {
+  get: k => { try { return localStorage.getItem('kurs.' + k); } catch { return null; } },
+  set: (k, v) => { try { localStorage.setItem('kurs.' + k, v); } catch {} },
+};
+
+let R = {};
+let last = store.get('last') || 'rub';           // какое из двух полей сумм вписано вручную
+for (const k of ['bybit', 'usdt', 'rub', 'vnd', 'sber']) { const v = store.get(k); if (v !== null && $(k)) $(k).value = v; }
+
+const usdtRate = () => num($('usdt').value) || R.usdt?.vnd;
+const viaUsd = rubPerUsd => R.vcb && rubPerUsd ? R.vcb.usd_buy / rubPerUsd : NaN;
+
+function calc() {
+  const p = num($('bybit').value), k = usdtRate() / p;   // k — сколько ₫ за 1 ₽
+  if (last === 'rub') { const v = num($('rub').value) * k; $('vnd').value = Number.isFinite(v) ? fmt(v) : ''; }
+  else { const r = num($('vnd').value) / k; $('rub').value = Number.isFinite(r) ? fmt(r, 2) : ''; }
+
+  const rub = num($('rub').value), vnd = num($('vnd').value), cbrK = R.cbr?.vnd_per_rub;
+  const lines = [];
+  if (!Number.isFinite(k)) lines.push('Впиши курс P2P и курс Bybit в донгах.');
+  else {
+    lines.push(`<b>${fmt(rub / p, 4)} USDT</b> · 1 ₽ = <b>${fmt(k, 2)} ₫</b> · 100 000 ₫ = <b>${fmt(1e5 / k, 2)} ₽</b>`);
+    if (cbrK && Number.isFinite(vnd)) {
+      const atCbr = vnd / cbrK;
+      lines.push(`По курсу ЦБ эти ₫ стоили бы ${fmt(atCbr, 2)} ₽. Переплата <b>${fmt(rub - atCbr, 2)} ₽</b> (${fmt((cbrK / k - 1) * 100, 2)} %).`);
+    }
+  }
+  $('summary').innerHTML = lines.map(l => `<div>${l}</div>`).join('');
+  table(k);
+}
+
+function table(myK) {
+  const cbrK = R.cbr?.vnd_per_rub;
+  const sber = num($('sber')?.value);
+  const rows = [
+    {name: 'Bybit: P2P → USDT → ₫', note: 'мой курс', k: myK, mine: true},
+    {name: 'Т-Банк: ₽ → $ → Vietcombank', note: R.tbank ? `$ по ${fmt(R.tbank.usd_sell, 2)} ₽` : 'нет данных', k: viaUsd(R.tbank?.usd_sell)},
+    {name: 'Сбер: ₽ → $ → Vietcombank', note: sber ? `$ по ${fmt(sber, 2)} ₽` : 'впиши курс Сбера выше', k: viaUsd(sber)},
+    {name: 'Vietcombank: перевод рублей', note: 'банк покупает ₽', k: R.vcb?.rub_buy},
+  ].sort((a, b) => (Number.isFinite(b.k) ? b.k : -1) - (Number.isFinite(a.k) ? a.k : -1));
+  const best = Math.max(...rows.map(r => r.k).filter(Number.isFinite));
+  const tr = (r, cls = '') => `<tr class="${cls}"><td>${r.name}${r.k === best && !cls.includes('ref') ? '<span class="chip">выгоднее</span>' : ''}<small>${r.note}</small></td>
+    <td>${fmt(r.k, 2)} ₫</td><td>${fmt(1e5 / r.k, 2)} ₽</td>
+    <td>${cbrK && Number.isFinite(r.k) ? (cls.includes('ref') ? '—' : fmt((cbrK / r.k - 1) * 100, 2) + ' %') : '—'}</td></tr>`;
+  $('rows').innerHTML = tr({name: 'ЦБ России', note: 'официальный курс, ориентир', k: cbrK}, 'ref')
+    + rows.map(r => tr(r, r.mine ? 'mine' : '')).join('');
+}
+
+function tiles() {
+  const t = (label, value, date) => `<div class="tile"><span>${label}</span><b>${value}</b><span>${when(date)}</span></div>`;
+  $('tiles').innerHTML =
+      t('ЦБ России, $', `${fmt(R.cbr?.usd, 2)} ₽`, R.cbr?.date)
+    + t('ЦБ России, 10 000 ₫', `${fmt(1e4 / R.cbr?.vnd_per_rub, 2)} ₽`, R.cbr?.date)
+    + t('Т-Банк продаёт $', `${fmt(R.tbank?.usd_sell, 2)} ₽`, R.tbank?.date)
+    + `<label class="tile" for="sber"><span>Сбер продаёт $, ₽</span><input id="sber" inputmode="decimal" autocomplete="off" placeholder="впиши"><span>с sberbank.ru</span></label>`
+    + t('Vietcombank покупает $', `${fmt(R.vcb?.usd_buy)} ₫`, R.vcb?.date)
+    + t('Vietcombank покупает ₽', `${fmt(R.vcb?.rub_buy, 2)} ₫`, R.vcb?.date)
+    + t('USDT, рынок', `${fmt(R.usdt?.vnd)} ₫`, R.usdt?.date);
+  const v = store.get('sber'); if (v !== null) $('sber').value = v;
+  $('sber').addEventListener('input', e => { store.set('sber', e.target.value); calc(); });
+  $('usdt').placeholder = R.usdt ? `${fmt(R.usdt.vnd)} — рынок` : 'рынок';
+}
+
+for (const k of ['bybit', 'usdt', 'rub', 'vnd']) {
+  $(k).addEventListener('input', () => {
+    if (k === 'rub' || k === 'vnd') { last = k; store.set('last', k); }
+    store.set(k, $(k).value);
+    calc();
+  });
+}
+
+fetch('rates.json', {cache: 'no-store'})
+  .then(r => r.ok ? r.json() : Promise.reject(r.status))
+  .then(d => { R = d; $('upd').textContent = 'Курсы обновлены ' + when(d.updated); })
+  .catch(() => { $('upd').textContent = 'Курсы не загрузились, считаю только по вписанным'; })
+  .finally(() => { tiles(); calc(); });
+</script>
+</body>
+</html>
