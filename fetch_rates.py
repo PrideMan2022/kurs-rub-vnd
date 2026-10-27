@@ -47,12 +47,12 @@ def vcb():
 def tbank():
     d = get("https://api.tbank.ru/v1/currency_rates?from=USD&to=RUB", cafile=RU_CA)
     r = next(x for x in d["payload"]["rates"] if x["category"] == "DebitCardsOperations")
-    return {"date": NOW, "usd_sell": r["sell"]}
+    return {"date": NOW, "usd_buy": r["buy"], "usd_sell": r["sell"]}
 
 
 def usdt():
-    d = get("https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=vnd")
-    return {"date": NOW, "vnd": d["tether"]["vnd"]}
+    d = get("https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=vnd,rub")
+    return {"date": NOW, "vnd": d["tether"]["vnd"], "rub": d["tether"]["rub"]}
 
 
 def main():

@@ -4,98 +4,146 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0A1020">
 <title>Рубль → донг</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap">
 <style>
-/* Одна колонка: калькулятор → курсы источников → сравнение.
-   Шаблоны: ДШ-015 КАЛЬКУЛЯТОР-СЕТКА (карточка), ДШ-027 ТАБЛИЦА-РЫНОК (Manrope, таблица, бейджи).
-   Пара цветов: синий рубль + красный донг (128° на круге RYB), жёлтый только на бейдже. */
+/* Стекло на тёмном: за карточками плавают размытые шары (синий рубль, красный донг, жёлтая искра).
+   Одна колонка: поле курса → вывод → шкала «рынок ↔ банк» → лесенка курсов.
+   Шаблоны: ФМ-004 ШАРЫ-ВХОД (стеклянная карточка, float), ПК-001 ЖИДКОЕ-СТЕКЛО (blob, свечение),
+   ДШ-027 ТАБЛИЦА-РЫНОК (таблица). Пара цветов: синий + красный (128° RYB), жёлтый только искрой. */
 :root{
-  --bg:#EEF2F6; --card:#FFFFFF; --ink:#14213D; --muted:#5B6B82; --line:#DDE3EC;
-  --rub:#1F4FD8; --vnd:#DA2C2C; --gold:#F2B705; --gold-ink:#4A3800;
+  --bg:#0A1020; --ink:#EEF2FA; --muted:#A3AEC4;
+  --glass:rgba(255,255,255,.08); --glass-2:rgba(255,255,255,.025); --stroke:rgba(255,255,255,.14);
+  --rub:#86A4FF; --vnd:#FF7A7A; --gold:#F2C230;
+  --good:#4ADE9A; --mid:#F2C230; --bad:#FF6B5E;
+  --orb-rub:#2F5BFF; --orb-vnd:#E5383B; --orb-gold:#F2B705;
   --font:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
-  color-scheme:light;
+  color-scheme:dark;
 }
-@media (prefers-color-scheme:dark){:root{
-  --bg:#0E1420; --card:#161E2D; --ink:#E8EDF5; --muted:#93A0B5; --line:#263247;
-  --rub:#7C9BFF; --vnd:#FF7A7A; --gold:#F2C230; --gold-ink:#2B2000; color-scheme:dark}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--font);font-variant-numeric:tabular-nums;
+html{background:var(--bg)}
+body{margin:0;min-height:100vh;background:radial-gradient(120% 80% at 50% 0%,#16213D 0%,var(--bg) 60%);color:var(--ink);
+  font:15px/1.5 var(--font);font-variant-numeric:tabular-nums;overflow-x:hidden;
   padding-block:24px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-main{max-width:720px;margin:0 auto;display:grid;gap:16px}
-header{display:flex;justify-content:space-between;align-items:baseline;gap:4px 12px;flex-wrap:wrap}
-h1{margin:0;font-size:26px;font-weight:800;letter-spacing:-.01em}
+
+/* Шары за стеклом */
+.orbs{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.orb{position:absolute;border-radius:42% 58% 70% 30%/45% 45% 55% 55%;filter:blur(48px);opacity:.55;
+  animation:float 14s ease-in-out infinite,blob 18s ease-in-out infinite}
+.orb.rub{width:46vmax;height:46vmax;left:-14vmax;top:-10vmax;background:radial-gradient(circle at 35% 30%,#6E8BFF,var(--orb-rub) 55%,transparent 72%)}
+.orb.vnd{width:40vmax;height:40vmax;right:-12vmax;top:28vh;background:radial-gradient(circle at 40% 35%,#FF7B7D,var(--orb-vnd) 55%,transparent 72%);animation-delay:-5s,-9s}
+.orb.gold{width:14vmax;height:14vmax;left:30%;bottom:-4vmax;background:radial-gradient(circle,var(--orb-gold),transparent 70%);opacity:.35;animation-delay:-2s,-4s}
+@keyframes float{50%{transform:translate3d(3vmax,-4vmax,0) scale(1.06)}}
+@keyframes blob{30%{border-radius:62% 38% 38% 62%/55% 62% 38% 45%}65%{border-radius:34% 66% 56% 44%/62% 40% 60% 38%}}
+
+main{position:relative;z-index:1;max-width:640px;margin:0 auto;display:grid;gap:16px}
+header{display:flex;justify-content:space-between;align-items:center;gap:8px 12px;flex-wrap:wrap}
+h1{margin:0;font-size:28px;font-weight:800;letter-spacing:-.01em}
 .r{color:var(--rub)} .d{color:var(--vnd)}
-.muted{color:var(--muted);font-size:13px}
-.card{background:var(--card);border-radius:12px;box-shadow:0 10px 25px rgba(20,33,61,.08);padding:20px;display:grid;gap:16px;min-width:0}
-h2{margin:0;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
-label{display:grid;gap:4px;font-size:13px;color:var(--muted)}
-input{font:800 20px var(--font);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;
-  padding:10px 12px;width:100%;font-variant-numeric:tabular-nums}
-input:focus{outline:2px solid var(--rub);outline-offset:1px}
-input::placeholder{color:var(--muted);font-weight:600}
-#rub{color:var(--rub)} #vnd{color:var(--vnd)}
-.summary{border-top:1px solid var(--line);padding-top:14px;display:grid;gap:4px}
-.summary b{color:var(--ink)}
-.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-.tile{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:grid;gap:2px;align-content:start}
-.tile span{font-size:12px;color:var(--muted)}
-.tile b{font-size:19px;font-weight:800}
-.tile input{font-size:19px;padding:2px 6px}
+.pill{font-size:12px;color:var(--muted);padding:4px 12px;border-radius:999px;background:var(--glass);border:1px solid var(--stroke);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+
+.card{position:relative;border-radius:24px;padding:22px;display:grid;gap:16px;min-width:0;
+  background:linear-gradient(135deg,var(--glass),var(--glass-2));border:1px solid var(--stroke);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 24px 60px rgba(0,0,0,.35);
+  backdrop-filter:blur(20px) saturate(140%);-webkit-backdrop-filter:blur(20px) saturate(140%);
+  animation:rise .7s cubic-bezier(.2,.8,.2,1) both}
+.card:nth-of-type(2){animation-delay:.12s}
+@keyframes rise{from{opacity:0;transform:translateY(16px) scale(.98)}}
+h2{margin:0;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+
+label{display:grid;gap:8px;font-size:13px;color:var(--muted)}
+.field{position:relative}
+input{font:800 40px/1.1 var(--font);color:var(--ink);caret-color:var(--rub);width:100%;font-variant-numeric:tabular-nums;
+  background:rgba(255,255,255,.06);border:1px solid var(--stroke);border-radius:16px;padding:12px 56px 12px 16px;
+  transition:border-color .2s,box-shadow .2s}
+input:focus{outline:none;border-color:var(--rub);box-shadow:0 0 0 4px rgba(134,164,255,.22)}
+.unit{position:absolute;right:18px;top:50%;transform:translateY(-50%);font-size:24px;font-weight:800;color:var(--muted);pointer-events:none}
+
+.verdict{border-radius:16px;padding:14px 16px;display:grid;gap:4px;background:rgba(255,255,255,.05);border:1px solid var(--stroke);
+  transition:background .4s,border-color .4s}
+.verdict b{font-size:19px;font-weight:800;display:flex;align-items:center;gap:8px}
+.verdict b::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--mid);box-shadow:0 0 12px var(--mid);flex:none}
+.verdict.good{background:rgba(74,222,154,.10);border-color:rgba(74,222,154,.35)} .verdict.good b::before{background:var(--good);box-shadow:0 0 12px var(--good)}
+.verdict.bad{background:rgba(255,107,94,.10);border-color:rgba(255,107,94,.35)} .verdict.bad b::before{background:var(--bad);box-shadow:0 0 12px var(--bad)}
+.verdict span{color:var(--muted);font-size:13px}
+
+/* Шкала: метки сверху в две дорожки, трек с зонами, твоя метка под треком */
+.scale{position:relative;padding-top:66px;padding-bottom:34px}
+.ref{position:absolute;transform:translateX(-50%);font-size:11px;line-height:1.25;color:var(--muted);text-align:center;white-space:nowrap}
+.ref b{display:block;color:var(--ink);font-size:12px}
+.ref.l{transform:none;text-align:left} .ref.rt{transform:translateX(-100%);text-align:right}
+.track{position:relative;height:10px;border-radius:999px;
+  background:linear-gradient(90deg,var(--good) 0,var(--good) var(--m,30%),var(--mid) calc((var(--m,30%) + var(--b,70%))/2),var(--bad) var(--b,70%),var(--bad) 100%);
+  opacity:.85;box-shadow:inset 0 1px 2px rgba(0,0,0,.4)}
+.tick{position:absolute;top:-4px;width:2px;height:18px;margin-left:-1px;background:rgba(255,255,255,.55);border-radius:1px}
+.dot{position:absolute;top:50%;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;background:var(--ink);
+  border:4px solid var(--rub);box-shadow:0 0 0 6px rgba(134,164,255,.25),0 0 24px var(--rub);
+  transition:left .6s cubic-bezier(.2,.9,.25,1.2)}
+.me{position:absolute;bottom:0;transform:translateX(-50%);font-size:13px;font-weight:800;color:var(--rub);white-space:nowrap;
+  transition:left .6s cubic-bezier(.2,.9,.25,1.2)}
+
+.vnd{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.vnd div{border-radius:16px;padding:12px 14px;display:grid;background:rgba(255,255,255,.04);border:1px solid var(--stroke)}
+.vnd span{font-size:12px;color:var(--muted)}
+.vnd strong{font-size:22px;font-weight:800;color:var(--vnd)}
+.pop{animation:pop .45s cubic-bezier(.2,.9,.3,1.4)}
+@keyframes pop{40%{transform:scale(1.05)}}
+
 .scroll{overflow-x:auto}
 table{width:100%;border-collapse:collapse}
-th,td{padding:10px 8px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th,td{padding:10px 6px;text-align:right;border-bottom:1px solid rgba(255,255,255,.08);white-space:nowrap}
 th:first-child,td:first-child{text-align:left;white-space:normal;padding-left:0}
 th:last-child,td:last-child{padding-right:0}
 th{font-size:12px;font-weight:600;color:var(--muted)}
 td small{display:block;color:var(--muted);font-size:12px;font-weight:400}
 tr:last-child td{border-bottom:0}
-tr.ref td{color:var(--muted)}
-tr.mine td:first-child{font-weight:800}
-.chip{display:inline-block;font-size:11px;font-weight:800;padding:1px 8px;border-radius:999px;background:var(--gold);color:var(--gold-ink);margin-left:6px;vertical-align:1px}
-footer{color:var(--muted);font-size:12px;max-width:65ch;display:grid;gap:6px}
+tr.mine td{font-weight:800;color:var(--rub);background:rgba(134,164,255,.10)}
+tr.mine td:first-child{box-shadow:inset 3px 0 0 var(--rub);padding-left:10px}
+.chip{display:inline-block;font-size:11px;font-weight:800;padding:1px 8px;border-radius:999px;background:var(--gold);color:#2B2000;margin-left:6px;vertical-align:1px}
+footer{position:relative;z-index:1;color:var(--muted);font-size:12px;max-width:65ch;display:grid;gap:6px}
 footer p{margin:0}
-a{color:var(--rub)}
+
+@media (max-width:440px){input{font-size:32px}.vnd strong{font-size:19px}.card{padding:18px;border-radius:20px}}
+@media (prefers-reduced-motion:reduce){*,*::before{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
+<div class="orbs" aria-hidden="true"><span class="orb rub"></span><span class="orb vnd"></span><span class="orb gold"></span></div>
 <main>
   <header>
     <h1><span class="r">Рубль</span> → <span class="d">донг</span></h1>
-    <span class="muted" id="upd">Загружаю курсы…</span>
+    <span class="pill" id="upd">Загружаю курсы…</span>
   </header>
 
-  <section class="card" aria-labelledby="h-calc">
-    <h2 id="h-calc">Покупка через Bybit</h2>
-    <div class="grid">
-      <label for="bybit">Мой курс P2P, ₽ за 1 USDT<input id="bybit" inputmode="decimal" autocomplete="off" value="83,50"></label>
-      <label for="usdt">Bybit, ₫ за 1 USDT<input id="usdt" inputmode="decimal" autocomplete="off" placeholder="рынок"></label>
+  <section class="card" aria-label="Мой курс">
+    <label for="my">Купил USDT на Bybit по
+      <span class="field"><input id="my" inputmode="decimal" autocomplete="off" value="83,50"><span class="unit">₽</span></span>
+    </label>
+    <div class="verdict" id="verdict" aria-live="polite"></div>
+    <div class="scale" id="scale" aria-hidden="true">
+      <div id="refs"></div>
+      <div class="track" id="track"><span class="dot" id="dot"></span></div>
+      <span class="me" id="me"></span>
     </div>
-    <div class="grid">
-      <label for="rub">Отдаю, ₽<input id="rub" inputmode="decimal" autocomplete="off" value="3000"></label>
-      <label for="vnd">Получаю, ₫<input id="vnd" inputmode="decimal" autocomplete="off"></label>
+    <div class="vnd">
+      <div><span>1 ₽ по твоему курсу</span><strong id="k1">—</strong><span id="k1m"></span></div>
+      <div><span>100 000 ₫ обойдутся в</span><strong id="k2">—</strong><span id="k2m"></span></div>
     </div>
-    <div class="summary muted" id="summary" aria-live="polite"></div>
-  </section>
-
-  <section class="card" aria-labelledby="h-now">
-    <h2 id="h-now">Курсы сейчас</h2>
-    <div class="tiles" id="tiles"></div>
   </section>
 
   <section class="card" aria-labelledby="h-cmp">
-    <h2 id="h-cmp">Сколько донгов за 1 рубль</h2>
+    <h2 id="h-cmp">Где стоит твой курс</h2>
     <div class="scroll"><table>
-      <thead><tr><th>Где</th><th>1 ₽ =</th><th>100 000 ₫ =</th><th>Переплата к ЦБ</th></tr></thead>
+      <thead><tr><th>Курс</th><th>₽ за 1 $</th><th>1 ₽ =</th><th>100 000 ₫ =</th></tr></thead>
       <tbody id="rows"></tbody>
     </table></div>
   </section>
 
   <footer>
-    <p>Расчёт: ₽ ÷ курс P2P = USDT, затем USDT × курс Bybit в донгах = ₫. Комиссия P2P у тейкера 0.</p>
-    <p>Курс Bybit в донгах: пустое поле берёт рыночную цену USDT (CoinGecko). Точный курс Bybit виден в «Активах»: сумма в ₫ ÷ сумма в USDT.</p>
-    <p>Курсы обновляются каждый час: ЦБ России, Т-Банк, Vietcombank, CoinGecko. Сайт Госбанка Вьетнама закрыт от автоматических запросов, поэтому вьетнамский курс берётся у Vietcombank: это госбанк, контрольный пакет у Госбанка. Сбер тоже не отдаёт курс программам, его курс вписывается вручную с <a href="https://www.sberbank.ru/ru/quotes/currencies" target="_blank" rel="noopener">sberbank.ru</a>.</p>
+    <p>Донги считаются по рыночной цене USDT. Твой путь: ₽ → USDT по твоему курсу → ₫ по рынку. Путь через банк: купить доллар в Т-Банке и продать его в Vietcombank.</p>
+    <p>Курсы обновляются каждый час: ЦБ России, Т-Банк (карты), Vietcombank, CoinGecko (USDT).</p>
   </footer>
 </main>
 
@@ -104,83 +152,91 @@ const $ = id => document.getElementById(id);
 const num = s => { const n = parseFloat(String(s).replace(/[\s  ]/g, '').replace(',', '.')); return n > 0 ? n : NaN; };
 const fmt = (n, d = 0) => Number.isFinite(n)
   ? n.toLocaleString('ru-RU', {minimumFractionDigits: d, maximumFractionDigits: d}).replace('-', '−') : '—';
-const when = iso => iso ? new Date(iso).toLocaleString('ru-RU', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'}) : '';
+const when = iso => new Date(iso).toLocaleString('ru-RU', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'});
 const store = {
-  get: k => { try { return localStorage.getItem('kurs.' + k); } catch { return null; } },
-  set: (k, v) => { try { localStorage.setItem('kurs.' + k, v); } catch {} },
+  get: () => { try { return localStorage.getItem('kurs.my'); } catch { return null; } },
+  set: v => { try { localStorage.setItem('kurs.my', v); } catch {} },
 };
-
 let R = {};
-let last = store.get('last') || 'rub';           // какое из двух полей сумм вписано вручную
-for (const k of ['bybit', 'usdt', 'rub', 'vnd', 'sber']) { const v = store.get(k); if (v !== null && $(k)) $(k).value = v; }
+const saved = store.get(); if (saved !== null) $('my').value = saved;
 
-const usdtRate = () => num($('usdt').value) || R.usdt?.vnd;
-const viaUsd = rubPerUsd => R.vcb && rubPerUsd ? R.vcb.usd_buy / rubPerUsd : NaN;
+// Меняет текст и коротко «подпрыгивает», если значение изменилось.
+function put(id, html) {
+  const el = $(id);
+  if (el.innerHTML === html) return;
+  el.innerHTML = html;
+  el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+}
 
-function calc() {
-  const p = num($('bybit').value), k = usdtRate() / p;   // k — сколько ₫ за 1 ₽
-  if (last === 'rub') { const v = num($('rub').value) * k; $('vnd').value = Number.isFinite(v) ? fmt(v) : ''; }
-  else { const r = num($('vnd').value) / k; $('rub').value = Number.isFinite(r) ? fmt(r, 2) : ''; }
+function scale(my, refs) {
+  const vals = refs.map(r => r.rub), lo0 = Math.min(...vals), hi0 = Math.max(...vals), pad = (hi0 - lo0) * .15 || 1;
+  const lo = lo0 - pad, hi = hi0 + pad, pos = v => Math.min(100, Math.max(0, (v - lo) / (hi - lo) * 100));
+  const lanes = [-Infinity, -Infinity];
+  $('refs').innerHTML = refs.map(r => {
+    const p = pos(r.rub), lane = p - lanes[0] > 24 ? 0 : 1;
+    lanes[lane] = p;
+    const cls = p < 12 ? 'ref l' : p > 88 ? 'ref rt' : 'ref';
+    return `<span class="${cls}" style="left:${p}%;top:${lane ? 0 : 30}px">${r.short}<b>${fmt(r.rub, 2)}</b></span>`;
+  }).join('');
+  $('track').querySelectorAll('.tick').forEach(t => t.remove());
+  refs.forEach(r => $('track').insertAdjacentHTML('beforeend', `<span class="tick" style="left:${pos(r.rub)}%"></span>`));
+  const mkt = refs.find(r => r.id === 'mkt'), bank = refs.find(r => r.id === 'sell');
+  $('track').style.setProperty('--m', (mkt ? pos(mkt.rub) : 30) + '%');
+  $('track').style.setProperty('--b', (bank ? pos(bank.rub) : 70) + '%');
+  const p = Number.isFinite(my) ? pos(my) : 50;
+  $('dot').style.left = p + '%';
+  $('me').style.left = Math.min(92, Math.max(8, p)) + '%';
+  $('me').textContent = Number.isFinite(my) ? `ты · ${fmt(my, 2)}` : '';
+}
 
-  const rub = num($('rub').value), vnd = num($('vnd').value), cbrK = R.cbr?.vnd_per_rub;
-  const lines = [];
-  if (!Number.isFinite(k)) lines.push('Впиши курс P2P и курс Bybit в донгах.');
+function render() {
+  const my = num($('my').value);
+  const usdtVnd = R.usdt?.vnd, mkt = R.usdt?.rub, bank = R.tbank?.usd_sell;
+  const k = usdtVnd / my, mktK = usdtVnd / mkt;          // сколько ₫ за 1 ₽
+
+  const v = $('verdict');
+  v.className = 'verdict';
+  if (!Number.isFinite(my)) put('verdict', '<b>Впиши курс</b>');
+  else if (!mkt) put('verdict', '<b>Курсы не загрузились</b>');
   else {
-    lines.push(`<b>${fmt(rub / p, 4)} USDT</b> · 1 ₽ = <b>${fmt(k, 2)} ₫</b> · 100 000 ₫ = <b>${fmt(1e5 / k, 2)} ₽</b>`);
-    if (cbrK && Number.isFinite(vnd)) {
-      const atCbr = vnd / cbrK;
-      lines.push(`По курсу ЦБ эти ₫ стоили бы ${fmt(atCbr, 2)} ₽. Переплата <b>${fmt(rub - atCbr, 2)} ₽</b> (${fmt((cbrK / k - 1) * 100, 2)} %).`);
-    }
+    const diff = my - mkt, pct = diff / mkt * 100;
+    const head = diff <= 0 ? `Дешевле рынка на ${fmt(-diff, 2)} ₽ (${fmt(-pct, 1)} %)` : `Дороже рынка на ${fmt(diff, 2)} ₽ (${fmt(pct, 1)} %)`;
+    let tail = '';
+    if (bank) tail = my < bank ? `Выгоднее, чем доллар в Т-Банке по ${fmt(bank, 2)} ₽.` : `Невыгодно: доллар в Т-Банке дешевле, ${fmt(bank, 2)} ₽.`;
+    if (diff <= 0) v.classList.add('good');
+    else if (bank && my >= bank) v.classList.add('bad');
+    put('verdict', `<b>${head}</b><span>Рынок сейчас ${fmt(mkt, 2)} ₽ за USDT. ${tail}</span>`);
   }
-  $('summary').innerHTML = lines.map(l => `<div>${l}</div>`).join('');
-  table(k);
+
+  put('k1', `${fmt(k, 2)} ₫`);
+  $('k1m').textContent = `по рынку ${fmt(mktK, 2)} ₫`;
+  put('k2', `${fmt(1e5 / k, 2)} ₽`);
+  $('k2m').textContent = `по рынку ${fmt(1e5 / mktK, 2)} ₽`;
+
+  // Лесенка: все курсы ₽ за 1 $ по возрастанию, твой встаёт на своё место.
+  const refs = [
+    {id: 'buy', short: 'банк покупает', name: 'Т-Банк покупает $', note: 'если продавать доллары', rub: R.tbank?.usd_buy},
+    {id: 'mkt', short: 'рынок', name: 'Рынок', note: 'USDT, CoinGecko', rub: mkt, k: mktK},
+    {id: 'cbr', short: 'ЦБ', name: 'ЦБ России', note: 'официальный курс', rub: R.cbr?.usd, k: R.cbr?.vnd_per_rub},
+    {id: 'sell', short: 'банк продаёт', name: 'Т-Банк продаёт $', note: R.vcb ? `затем Vietcombank: ${fmt(R.vcb.usd_buy)} ₫ за $` : '', rub: bank, k: R.vcb && bank ? R.vcb.usd_buy / bank : NaN},
+  ].filter(r => Number.isFinite(r.rub)).sort((a, b) => a.rub - b.rub);
+  if (refs.length) scale(my, refs);
+  $('scale').hidden = !refs.length;
+
+  const rows = [...refs, {name: 'Твой курс Bybit', note: 'USDT → ₫ по рынку', rub: my, k, mine: true}]
+    .filter(r => Number.isFinite(r.rub)).sort((a, b) => a.rub - b.rub);
+  $('rows').innerHTML = rows.map(r => `<tr class="${r.mine ? 'mine' : ''}">
+    <td>${r.name}${r.mine ? '<span class="chip">ты</span>' : ''}<small>${r.note}</small></td>
+    <td>${fmt(r.rub, 2)}</td><td>${r.k ? fmt(r.k, 2) + ' ₫' : '—'}</td><td>${r.k ? fmt(1e5 / r.k, 2) + ' ₽' : '—'}</td></tr>`).join('');
 }
 
-function table(myK) {
-  const cbrK = R.cbr?.vnd_per_rub;
-  const sber = num($('sber')?.value);
-  const rows = [
-    {name: 'Bybit: P2P → USDT → ₫', note: 'мой курс', k: myK, mine: true},
-    {name: 'Т-Банк: ₽ → $ → Vietcombank', note: R.tbank ? `$ по ${fmt(R.tbank.usd_sell, 2)} ₽` : 'нет данных', k: viaUsd(R.tbank?.usd_sell)},
-    {name: 'Сбер: ₽ → $ → Vietcombank', note: sber ? `$ по ${fmt(sber, 2)} ₽` : 'впиши курс Сбера выше', k: viaUsd(sber)},
-    {name: 'Vietcombank: перевод рублей', note: 'банк покупает ₽', k: R.vcb?.rub_buy},
-  ].sort((a, b) => (Number.isFinite(b.k) ? b.k : -1) - (Number.isFinite(a.k) ? a.k : -1));
-  const best = Math.max(...rows.map(r => r.k).filter(Number.isFinite));
-  const tr = (r, cls = '') => `<tr class="${cls}"><td>${r.name}${r.k === best && !cls.includes('ref') ? '<span class="chip">выгоднее</span>' : ''}<small>${r.note}</small></td>
-    <td>${fmt(r.k, 2)} ₫</td><td>${fmt(1e5 / r.k, 2)} ₽</td>
-    <td>${cbrK && Number.isFinite(r.k) ? (cls.includes('ref') ? '—' : fmt((cbrK / r.k - 1) * 100, 2) + ' %') : '—'}</td></tr>`;
-  $('rows').innerHTML = tr({name: 'ЦБ России', note: 'официальный курс, ориентир', k: cbrK}, 'ref')
-    + rows.map(r => tr(r, r.mine ? 'mine' : '')).join('');
-}
-
-function tiles() {
-  const t = (label, value, date) => `<div class="tile"><span>${label}</span><b>${value}</b><span>${when(date)}</span></div>`;
-  $('tiles').innerHTML =
-      t('ЦБ России, $', `${fmt(R.cbr?.usd, 2)} ₽`, R.cbr?.date)
-    + t('ЦБ России, 10 000 ₫', `${fmt(1e4 / R.cbr?.vnd_per_rub, 2)} ₽`, R.cbr?.date)
-    + t('Т-Банк продаёт $', `${fmt(R.tbank?.usd_sell, 2)} ₽`, R.tbank?.date)
-    + `<label class="tile" for="sber"><span>Сбер продаёт $, ₽</span><input id="sber" inputmode="decimal" autocomplete="off" placeholder="впиши"><span>с sberbank.ru</span></label>`
-    + t('Vietcombank покупает $', `${fmt(R.vcb?.usd_buy)} ₫`, R.vcb?.date)
-    + t('Vietcombank покупает ₽', `${fmt(R.vcb?.rub_buy, 2)} ₫`, R.vcb?.date)
-    + t('USDT, рынок', `${fmt(R.usdt?.vnd)} ₫`, R.usdt?.date);
-  const v = store.get('sber'); if (v !== null) $('sber').value = v;
-  $('sber').addEventListener('input', e => { store.set('sber', e.target.value); calc(); });
-  $('usdt').placeholder = R.usdt ? `${fmt(R.usdt.vnd)} — рынок` : 'рынок';
-}
-
-for (const k of ['bybit', 'usdt', 'rub', 'vnd']) {
-  $(k).addEventListener('input', () => {
-    if (k === 'rub' || k === 'vnd') { last = k; store.set('last', k); }
-    store.set(k, $(k).value);
-    calc();
-  });
-}
+$('my').addEventListener('input', () => { store.set($('my').value); render(); });
 
 fetch('rates.json', {cache: 'no-store'})
   .then(r => r.ok ? r.json() : Promise.reject(r.status))
-  .then(d => { R = d; $('upd').textContent = 'Курсы обновлены ' + when(d.updated); })
-  .catch(() => { $('upd').textContent = 'Курсы не загрузились, считаю только по вписанным'; })
-  .finally(() => { tiles(); calc(); });
+  .then(d => { R = d; $('upd').textContent = 'Курсы на ' + when(d.updated); })
+  .catch(() => { $('upd').textContent = 'Курсы не загрузились'; })
+  .finally(render);
 </script>
 </body>
 </html>
